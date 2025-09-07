@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Depth Map Generator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, Roboto, Helvetica, sans-serif;
+            background: radial-gradient(220.2% 202.06% at -10.28% -11.72%, #727272 8.2%, #242424 81.15%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .main-container {
+            width: 350px;
+            border-radius: 24px;
+            background: #D9D9D9;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 34px 38px;
+        }
+
+        .title {
+            color: #000;
+            text-align: left;
+            font-weight: 700;
+            font-size: 29px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .upload-instruction {
+            color: #000;
+            text-align: left;
+            font-weight: 400;
+            font-size: 14px;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .file-upload-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .file-upload-area {
+            width: 274px;
+            height: 132px;
+            border-radius: 10px;
+            border: 2px dashed #0362AF;
+            background: #D9D9D9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            background: #C8C8C8;
+        }
+        
+        .upload-icon {
+            width: 29px;
+            height: 29px;
+            margin-bottom: 7px;
+        }
+
+        .choose-file-text {
+            color: #158CED;
+            text-align: center;
+            font-weight: 400;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .no-files-text {
+            color: #5D5D5D;
+            text-align: center;
+            font-weight: 400;
+            font-size: 10px;
+        }
+        
+        .hidden-file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .submit-button {
+            width: 274px;
+            height: 50px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.56);
+            background: #158CED;
+            color: #FFF;
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .submit-button:hover {
+            background: #1177CC;
+        }
+        
+        .submit-button:disabled {
+            background: #AAA;
+            cursor: not-allowed;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #fff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-messages {
+            color: #FF4444;
+            text-align: center;
+            font-size: 16px;
+            margin-top: 20px;
+            list-style: none;
+        }
+        
+        .result-image {
+            margin-top: 20px;
+            max-width: 274px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-selected {
+            border-color: #158CED;
+            background: #E8F4FD;
+        }
+
+        .selected-file-name {
+            color: #158CED;
+            font-weight: 600;
+            font-size: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1 class="title">Depth Pro</h1>
+        <p class="upload-instruction">Upload your image for depth map</p>
+        
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="file-upload-container">
+                <div class="file-upload-area" id="fileUploadArea">
+                    <svg class="upload-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M42 30V38C42 39.0609 41.5786 40.0783 40.8284 40.8284C40.0783 41.5786 39.0609 42 38 42H10C8.93913 42 7.92172 41.5786 7.17157 40.8284C6.42143 40.0783 6 39.0609 6 38V30M34 16L24 6M24 6L14 16M24 6V30" stroke="#158CED" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="choose-file-text">Choose file</div>
+                    <div class="no-files-text" id="noFilesText">No files uploaded</div>
+                    <div class="selected-file-name" id="selectedFileName" style="display: none;"></div>
+                    <input type="file" name="image" accept="image/*" required class="hidden-file-input" id="fileInput">
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-button" id="submitBtn">
+                <span id="btnText">Submit</span>
+                <span id="btnSpinner" class="spinner" style="display:none;"></span>
+            </button>
+        </form>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="error-messages">
+                    {% for message in messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        {% if result_img %}
+        <img src="{{ url_for('static', filename=result_img) }}" class="result-image" alt="Depth Map Result">
+        {% endif %}
+    </div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const fileUploadArea = document.getElementById('fileUploadArea');
+const noFilesText = document.getElementById('noFilesText');
+const selectedFileName = document.getElementById('selectedFileName');
+
+fileInput.addEventListener('change', function() {
+    const errorList = document.querySelector('.error-messages');
+    if (errorList) errorList.remove();
+    
+    const resultImg = document.querySelector('.result-image');
+    if (resultImg) resultImg.remove();
+    
+    if (fileInput.files && fileInput.files[0]) {
+        const fileName = fileInput.files[0].name;
+        fileUploadArea.classList.add('file-selected');
+        noFilesText.style.display = 'none';
+        selectedFileName.style.display = 'block';
+        selectedFileName.textContent = fileName;
+    } else {
+        fileUploadArea.classList.remove('file-selected');
+        noFilesText.style.display = 'block';
+        selectedFileName.style.display = 'none';
+    }
+});
+
+fileUploadArea.addEventListener('click', function() {
+    fileInput.click();
+});
+
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    document.getElementById('btnText').style.display = 'none';
+    document.getElementById('btnSpinner').style.display = 'inline-block';
+    btn.disabled = true;
+});
+</script>
+</body>
+</html>
